@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-width: 8px;
+            border-color: #374151;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="card bg-gray-800 rounded-lg p-8 shadow-lg">
+            <h1 class="text-2xl font-bold text-white mb-6 text-center">Test Results</h1>
+            
+            <div class="flex flex-col items-center mb-8">
+                {% if timed_out %}
+                <div class="mb-4 p-3 bg-red-900 text-red-200 rounded-md text-center">
+                    Time's up! Your test was automatically submitted.
+                </div>
+                {% endif %}
+                
+                <div class="relative score-circle rounded-full flex items-center justify-center mb-4">
+                    <div class="text-center">
+                        <span class="text-4xl font-bold text-white">{{ score }}</span>
+                        <span class="text-xl text-gray-400">/ {{ total }}</span>
+                    </div>
+                </div>
+                
+                <div class="text-lg font-medium text-gray-300 mb-2">
+                    {% set percentage = (score/total)*100 %}
+                    {% if percentage >= 80 %}
+                        Excellent! 🎉
+                    {% elif percentage >= 60 %}
+                        Good job! 👍
+                    {% elif percentage >= 40 %}
+                        Keep practicing! ✏️
+                    {% else %}
+                        Don't give up! 💪
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-400">
+                    {{ "%.1f"|format(percentage) }}% correct answers
+                </div>
+            </div>
+            
+            <div class="mt-6 space-y-4">
+                <a href="/" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-center transition duration-150 ease-in-out">
+                    Take Another Test
+                </a>
+                <button onclick="window.print()" class="block w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md text-center transition duration-150 ease-in-out">
+                    Print Results
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

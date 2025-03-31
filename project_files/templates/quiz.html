@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Session</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .option {
+            transition: all 0.2s;
+        }
+        .option:hover {
+            background-color: #374151;
+        }
+        .option.selected {
+            border-color: #3b82f6;
+            background-color: #1e3a8a;
+        }
+        .option.correct {
+            border-color: #10b981;
+            background-color: #064e3b;
+        }
+        .option.incorrect {
+            border-color: #ef4444;
+            background-color: #7f1d1d;
+        }
+        .timer {
+            font-family: monospace;
+        }
+        .question-palette-item {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl">
+        <div class="card bg-gray-800 rounded-lg p-8 shadow-lg">
+            <!-- Header with timer -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-sm font-medium text-gray-400">
+                    Question {{ question_num }} of {{ total_questions }}
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if timed_test %}
+                    <div id="timer" class="timer px-3 py-1 bg-gray-700 rounded-md text-gray-300 font-medium">
+                        {% if time_left %}
+                            {{ "%02d:%02d" % (time_left//60, time_left%60) }}
+                        {% else %}
+                            00:00
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Question Palette -->
+            <div class="grid grid-cols-10 gap-2 mb-6" id="question-palette">
+                {% for i in range(1, total_questions+1) %}
+                <div class="question-palette-item rounded-full text-sm font-medium
+                    {% if i == question_num %} border-2 border-blue-500 bg-blue-900
+                    {% elif answered[i-1] %} bg-green-900 text-green-200
+                    {% elif visited[i-1] %} bg-yellow-900 text-yellow-200
+                    {% else %} bg-gray-700 text-gray-300 {% endif %}"
+                    data-question="{{ i }}">
+                    {{ i }}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Question -->
+            <div class="mb-6">
+                <h2 id="question-text" class="text-xl font-semibold text-white">{{ question.question }}</h2>
+            </div>
+            
+            <!-- Options -->
+            <div id="options-container" class="space-y-3 mb-6">
+                {% for letter, option in question.options.items() %}
+                <div class="option p-4 border border-gray-600 rounded-md cursor-pointer
+                    hover:bg-gray-700"
+                    data-option="{{ letter }}">
+                    <span class="font-medium text-gray-300">{{ letter }})</span> 
+                    <span class="text-gray-300">{{ option }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Feedback and Solution -->
+            <div id="feedback" class="hidden mb-4 p-3 rounded-md"></div>
+            
+            <div class="mt-4">
+                <button id="showSolutionBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md">
+                    Show Solution
+                </button>
+                <div id="solutionContainer" class="hidden mt-4 p-4 bg-gray-700 rounded-md">
+                    <h3 class="font-semibold text-lg mb-2 text-white">Solution:</h3>
+                    <div id="solutionText" class="text-gray-300"></div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <button id="next-btn" 
+                    class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out hidden">
+                Next Question
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const optionsContainer = document.getElementById('options-container');
+            const nextBtn = document.getElementById('next-btn');
+            const feedbackDiv = document.getElementById('feedback');
+            const timerElement = document.getElementById('timer');
+            const questionText = document.getElementById('question-text');
+            const questionCounter = document.querySelector('.text-sm.font-medium');
+            const solutionBtn = document.getElementById('showSolutionBtn');
+            const solutionContainer = document.getElementById('solutionContainer');
+            const solutionText = document.getElementById('solutionText');
+            
+            let timeLeft = {{ time_left if time_left else 0 }};
+            let timerInterval;
+            let currentSolution = '';
+            
+            // Timer functionality
+            if (timerElement && timeLeft > 0) {
+                updateTimerDisplay();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            
+            function updateTimer() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endTestDueToTimeout();
+                }
+            }
+            
+            function updateTimerDisplay() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = Math.floor(timeLeft % 60);
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            function endTestDueToTimeout() {
+                window.location.href = '/results?timed_out=true';
+            }
+            
+            // Load new question
+            function loadNewQuestion(questionData, questionNum, totalQuestions) {
+                // Update question text
+                questionText.textContent = questionData.question;
+                
+                // Update question counter
+                questionCounter.textContent = `Question ${questionNum} of ${totalQuestions}`;
+                
+                // Clear and recreate options
+                optionsContainer.innerHTML = '';
+                for (const [letter, optionText] of Object.entries(questionData.options)) {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option p-4 border border-gray-600 rounded-md cursor-pointer hover:bg-gray-700';
+                    optionDiv.setAttribute('data-option', letter);
+                    optionDiv.innerHTML = `<span class="font-medium text-gray-300">${letter})</span> <span class="text-gray-300">${optionText}</span>`;
+                    
+                    optionDiv.addEventListener('click', function() {
+                        if (feedbackDiv.classList.contains('hidden')) {
+                            document.querySelectorAll('.option').forEach(opt => {
+                                opt.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
+                            checkAnswer(this.getAttribute('data-option'));
+                        }
+                    });
+                    
+                    optionsContainer.appendChild(optionDiv);
+                }
+                
+                // Store solution for current question
+                currentSolution = questionData.solution || 'Solution not available';
+                
+                // Reset UI state
+                feedbackDiv.classList.add('hidden');
+                solutionContainer.classList.add('hidden');
+                solutionBtn.textContent = 'Show Solution';
+                nextBtn.classList.add('hidden');
+            }
+            
+            // Check answer
+            function checkAnswer(selectedOption) {
+                fetch('/check_answer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ selected_option: selectedOption }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Show feedback
+                    feedbackDiv.textContent = data.is_correct ? 'Correct!' : 'Incorrect!';
+                    feedbackDiv.className = data.is_correct ? 
+                        'mb-4 p-3 bg-green-900 text-green-200 rounded-md' : 
+                        'mb-4 p-3 bg-red-900 text-red-200 rounded-md';
+                    feedbackDiv.classList.remove('hidden');
+                    
+                    // Highlight options
+                    document.querySelectorAll('.option').forEach(opt => {
+                        const optLetter = opt.getAttribute('data-option');
+                        if (optLetter === data.correct_answer) {
+                            opt.classList.add('correct');
+                        } else if (optLetter === selectedOption && !data.is_correct) {
+                            opt.classList.add('incorrect');
+                        }
+                    });
+                    
+                    // Update question palette
+                    updateQuestionPalette(data.answered, data.visited);
+                    
+                    if (data.has_next) {
+                        nextBtn.classList.remove('hidden');
+                        nextBtn.textContent = 'Next Question';
+                        nextBtn.onclick = () => {
+                            if (timerElement && data.time_left) {
+                                timeLeft = data.time_left;
+                                updateTimerDisplay();
+                            }
+                            loadNewQuestion(data.next_question, data.question_num, data.total_questions);
+                        };
+                    } else {
+                        nextBtn.textContent = 'View Results';
+                        nextBtn.onclick = () => {
+                            window.location.href = '/results';
+                        };
+                        nextBtn.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            
+            // Update question palette
+            function updateQuestionPalette(answered, visited) {
+                document.querySelectorAll('#question-palette > div').forEach((div, index) => {
+                    const questionNum = index + 1;
+                    const isCurrent = questionNum === ({{ question_num }} + (answered[{{ question_num - 1 }}] ? 1 : 0));
+                    const isAnswered = answered[index];
+                    const isVisited = visited[index];
+                    
+                    div.className = `question-palette-item rounded-full text-sm font-medium ${
+                        isCurrent ? 'border-2 border-blue-500 bg-blue-900' :
+                        isAnswered ? 'bg-green-900 text-green-200' :
+                        isVisited ? 'bg-yellow-900 text-yellow-200' :
+                        'bg-gray-700 text-gray-300'
+                    }`;
+                });
+            }
+            
+            // Show solution
+            solutionBtn.addEventListener('click', function() {
+                solutionText.innerHTML = currentSolution.replace(/\n/g, '<br>');
+                solutionContainer.classList.toggle('hidden');
+                this.textContent = solutionContainer.classList.contains('hidden') ? 
+                    'Show Solution' : 'Hide Solution';
+            });
+            
+            // Question palette navigation
+            document.querySelectorAll('#question-palette > div').forEach(item => {
+                item.addEventListener('click', function() {
+                    const questionNum = parseInt(this.getAttribute('data-question'));
+                    fetch('/set_question', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question_num: questionNum }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        loadNewQuestion(data.question, questionNum, data.total_questions);
+                    });
+                });
+            });
+            
+            // Initialize options
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    if (feedbackDiv.classList.contains('hidden')) {
+                        document.querySelectorAll('.option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        this.classList.add('selected');
+                        checkAnswer(this.getAttribute('data-option'));
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

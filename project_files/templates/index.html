@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Question Generation App Utilizing LLMs for
+        Enhanced Learning
+        </title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4B5563;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #68D391;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #3B82F6;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #1F2937;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            color: white;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 class="text-lg font-bold mb-2">Timed Test Information</h3>
+            <p>When the timed test option is enabled, you will have 1 minute to answer each question. The total test duration will be calculated as:</p>
+            <p class="mt-2 font-medium">Total Time = Number of Questions × 1 minute</p>
+            <p class="mt-2">For example, if you select 10 questions, you will have 10 minutes to complete the entire test.</p>
+        </div>
+    </div>
+
+    <div class="w-full max-w-2xl">
+        <div class="card bg-gray-800 rounded-lg p-8 shadow-lg">
+            <h1 class="text-2xl font-bold text-white mb-6 text-center">Dynamic Question Generation App Utilizing LLMs for
+                Enhanced Learning
+                </h1>
+            
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Subjects (Select Multiple)</label>
+                    <div class="space-y-2">
+                        {% for subject in subjects %}
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="subjects" value="{{ subject }}" 
+                                   class="rounded border-gray-600 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-gray-700" checked>
+                            <span class="ml-2 text-gray-300">{{ subject }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="difficulty" class="block text-sm font-medium text-gray-300 mb-1">Difficulty</label>
+                    <select id="difficulty" name="difficulty" 
+                            class="w-full px-4 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="num_questions" class="block text-sm font-medium text-gray-300 mb-1">Number of Questions (max 30)</label>
+                    <input type="number" id="num_questions" name="num_questions" min="1" max="30" 
+                           class="w-full px-4 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
+                           value="5" required>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="text-sm font-medium text-gray-300">Timed Test</span>
+                        <div class="info-icon" id="infoButton">i</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="timed_test" {% if timed_test %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                    Start Test
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        
+        const modal = document.getElementById("infoModal");
+        const btn = document.getElementById("infoButton");
+        const span = document.getElementsByClassName("close")[0];
+
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
