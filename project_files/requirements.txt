@@ -1,0 +1,19 @@
+# Core Packages
+Flask==2.3.2
+python-dotenv==1.0.0
+
+# Groq API & LLM
+groq==0.5.0
+requests==2.31.0
+
+# Frontend Dependencies (if using Flask templating)
+Jinja2==3.1.2
+WTForms==3.0.1
+
+# Utility Libraries
+numpy==1.24.3  # For any scoring calculations
+pandas==2.0.3   # For analytics/performance tracking
+
+# Development & Testing
+pytest==7.4.0
+Flask-Testing==0.8.1
