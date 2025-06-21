@@ -1,4 +1,4 @@
-# 📚 AI-Powered-Aptitude-Test-Generation-App
+# 📚 LLM-Powered-Aptitude-Test-Generation-App
 
 *An intelligent test generator for engineering placements focussing on Online Tests *
 
