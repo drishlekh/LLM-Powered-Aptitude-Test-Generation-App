@@ -1,4 +1,4 @@
-
+  
 import os
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from groq import Groq
