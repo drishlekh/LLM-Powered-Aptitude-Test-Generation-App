@@ -1,0 +1,62 @@
+
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        .dark body { background-color: #111827; color: #fff; }
+        .light body { background-color: #f3f4f6; color: #1f2937; }
+        .dark .card { background-color: rgba(31, 41, 55, 0.9); }
+        .light .card { background-color: rgba(255, 255, 255, 0.95); }
+        .score-circle { width: 150px; height: 150px; border-width: 8px; }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="card rounded-lg p-8 shadow-lg animate__animated animate__fadeIn">
+            <h1 class="text-2xl font-bold mb-6 text-center">Test Results</h1>
+            
+            <div class="flex flex-col items-center mb-8">
+                <div class="relative score-circle rounded-full flex items-center justify-center mb-4 border-gray-700">
+                    <div class="text-center">
+                        <span class="text-4xl font-bold">{{ score }}</span>
+                        <span class="text-xl text-gray-400">/ {{ total }}</span>
+                    </div>
+                </div>
+                
+                {% set percentage = (score/total*100) if total > 0 else 0 %}
+                <div class="text-lg font-medium text-gray-300 mb-2">
+                    {% if percentage >= 80 %}Excellent! 🎉
+                    {% elif percentage >= 60 %}Good job! 👍
+                    {% elif percentage >= 40 %}Keep practicing! ✏️
+                    {% else %}Don't give up! 💪
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-400">{{ "%.1f"|format(percentage) }}% Correct</div>
+            </div>
+            
+            <!-- MODIFICATION: Form to submit data to the report page -->
+            <form action="{{ url_for('report_page') }}" method="POST" class="space-y-4">
+                <!-- Hidden input to carry the data -->
+                <input type="hidden" name="report_data" value="{{ report_data_json | e }}">
+                
+                <!-- NEW: Generate Report Button -->
+                <button type="submit" class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-md text-center transition duration-150">
+                    Generate Detailed Report
+                </button>
+            </form>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('index') }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md text-center transition duration-150">
+                    Take Another Test
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

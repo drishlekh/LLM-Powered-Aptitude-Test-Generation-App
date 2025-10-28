@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Performance Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- jsPDF Library for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* Styles for the report content generated from Markdown */
+        .prose { color: #d1d5db; }
+        .prose h1, .prose h2, .prose h3 { color: white; border-bottom: 1px solid #4b5563; padding-bottom: 0.3em; }
+        .prose a { color: #93c5fd; text-decoration: underline; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; }
+        .prose li { margin-bottom: 0.5em; }
+        .prose strong { color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4 md:p-8">
+    <div class="max-w-4xl mx-auto" id="report-container">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-purple-400">Your Performance Report</h1>
+            <p class="text-gray-400 mt-2">An AI-Generated Analysis for: {{ report_data.student_name }}</p>
+        </header>
+
+        <!-- Container for the report content -->
+        <div class="bg-gray-800 p-6 md:p-8 rounded-lg shadow-2xl">
+            <!-- This div will be populated with the agent's HTML response -->
+            <div class="prose prose-invert max-w-none">
+                {{ report_html | safe }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="max-w-4xl mx-auto text-center mt-8 mb-4 space-x-4">
+        <a href="{{ url_for('index') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-md transition-transform transform hover:scale-105">
+            Back to Home
+        </a>
+        <button id="download-pdf-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md transition-transform transform hover:scale-105">
+            Download as PDF
+        </button>
+    </div>
+
+    <script>
+        document.getElementById('download-pdf-btn').addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const reportContainer = document.getElementById('report-container');
+            const button = this;
+
+            // Hide the button so it doesn't appear in the PDF
+            button.style.display = 'none';
+
+            html2canvas(reportContainer, {
+                scale: 2, // Increase scale for better resolution
+                useCORS: true,
+                backgroundColor: '#111827' // Match the body background
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                const ratio = canvasWidth / canvasHeight;
+                const widthInPdf = pdfWidth;
+                const heightInPdf = widthInPdf / ratio;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, widthInPdf, heightInPdf);
+                pdf.save('performance_report.pdf');
+
+                // Show the button again after PDF is generated
+                button.style.display = 'inline-block';
+            });
+        });
+    </script>
+</body>
+</html>

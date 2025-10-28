@@ -1,0 +1,47 @@
+<!-- templates/welcome.html -->
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Quiz App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .dark body { background-color: #111827; }
+        .dark .card {
+            background: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div class="w-full max-w-lg text-center">
+        <div class="card rounded-xl p-8 md:p-12 shadow-2xl">
+            <h1 class="text-4xl font-bold mb-4 text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                AI-Powered Test Generation
+            </h1>
+            <p class="text-lg text-gray-300 mb-8">
+                Sharpen your skills with dynamically generated quizzes. Sign in to track your progress or continue as a guest to try it out.
+            </p>
+            
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <a href="{{ url_for('login') }}" class="w-full md:w-auto flex-1 py-3 px-6 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-all duration-300 hover:scale-105">
+                    Sign In
+                </a>
+                <a href="{{ url_for('signup') }}" class="w-full md:w-auto flex-1 py-3 px-6 rounded-md bg-green-600 hover:bg-green-700 text-white font-semibold text-lg transition-all duration-300 hover:scale-105">
+                    Sign Up
+                </a>
+            </div>
+            <div class="mt-4">
+                <form action="{{ url_for('continue_as_guest') }}" method="POST" class="w-full">
+                     <button type="submit" class="w-full md:w-1/2 mx-auto py-2 px-4 rounded-md bg-gray-600 hover:bg-gray-700 text-white font-semibold transition-all duration-200">
+                        Continue as Guest
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
